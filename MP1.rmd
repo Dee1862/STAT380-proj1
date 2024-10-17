@@ -18,22 +18,16 @@ library(lubridate)
 data <- read_xlsx("CODGames2_mp.xlsx")
 ```
 ## Exploring the Dataset
-```{r}
-head(data)
-str(data)
 
+#### Selected Variables:
+Categorial Variable: PrimaryWeapon, GameType
+Quantitative Variable: Eliminations, TotalXP, Score
+
+```{r}
 # Summary statistics for a categorial variable: "PrimaryWeapon"
 PrimaryWeapon <- data$PrimaryWeapon
 table(PrimaryWeapon)
 prop.table(table(PrimaryWeapon))
-
-# Summary statistics for a quantitative variable: "PrimaryWeapon"
-Eliminations <- data$Eliminations
-summary(Eliminations)
-mean(Eliminations, na.rm = TRUE)
-median(Eliminations, na.rm = TRUE)
-max(Eliminations, na.rm = TRUE)
-sd(Eliminations, na.rm = TRUE)
 
 # Data visualization for "PrimaryWeapon"
 data |>
@@ -41,13 +35,58 @@ data |>
   geom_bar(fill = "darkred", color = "black") + 
   labs(x = "Primary Weapon", y = "Count")
 
+# Summary statistics for a categorial variable: "GameType"
+GameType <- data$GameType
+table(GameType)
+prop.table(table(GameType))
+
+# Data visualization for "GameType"
+data |>
+  ggplot(aes(x = GameType)) +
+  geom_bar(fill = "darkgreen", color = "black") + 
+  labs(x = "Game Type", y = "Count")
+
+# Summary statistics for a quantitative variable: "Eliminations"
+Eliminations <- data$Eliminations
+summary(Eliminations)
+mean(Eliminations, na.rm = TRUE)
+median(Eliminations, na.rm = TRUE)
+max(Eliminations, na.rm = TRUE)
+sd(Eliminations, na.rm = TRUE)
+
 # Data visualization for "Eliminations"
 data |>
   ggplot(aes(x = Eliminations)) +
   geom_boxplot(fill = "beige", color = "black") + 
   labs(x = "Number of Eliminations", y = "Count")
 
+# Summary statistics for a quantitative variable: "TotalXP"
+TotalXP <- data$TotalXP
+summary(TotalXP)
+mean(TotalXP, na.rm = TRUE)
+median(TotalXP, na.rm = TRUE)
+max(TotalXP, na.rm = TRUE)
+sd(TotalXP, na.rm = TRUE)
 
+# Data visualization for "TotalXP"
+data |>
+  ggplot(aes(x = TotalXP)) +
+  geom_histogram(fill = "lightblue", color = "black", bins = 30) + 
+  labs(x = "Total XP", y = "Frequency")
+
+# Summary statistics for a quantitative variable: "Score"
+Score <- data$Score
+summary(Score)
+mean(Score, na.rm = TRUE)
+median(Score, na.rm = TRUE)
+max(Score, na.rm = TRUE)
+sd(Score, na.rm = TRUE)
+
+# Data visualization for "Score"
+data |>
+  ggplot(aes(x = Score)) +
+  geom_histogram(fill = "orange", color = "black", bins = 30) + 
+  labs(x = "Score", y = "Frequency")
 ```
 
 
