@@ -151,6 +151,6 @@ ggplot(data, aes(x = Damage, y = Eliminations)) +
   geom_smooth(method = "lm", color = "gold", se = FALSE, formula = y~x)
   labs(x = "Damage", y = "Number of Eliminations")
 ```
-
+The scatterplot shows a positive linear relationship between damage and the number of eliminations. This tells us that "Damage" and "Eliminations" are almost directly proportional to each other.
 
 
