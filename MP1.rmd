@@ -121,13 +121,13 @@ data |>
 
 The histogram of the Score shows that the scores are fairly spreaded, however the most of the player scores peak around 2,000 to 4,000. The score shows similar shape and the peak point of frequency compare to the plot of eliminations and xp. This fact tells that the quantatitive value is related to each other and could be able to connected.
 
+# Task 3 - Potential Questions:
 
-## Potential questions to ask:
--> How were the data for each match collected?
--> Are there any problem with the data (like missing values and any problems) which should be accounted for?
--> Were all the matches, from which data was collected, part of the same session.
+1.  How were the data for each match collected?
+2.  Are there any problem with the data (like missing values and any problems) which should be accounted for?
+3.  Were all the matches, from which data was collected, part of the same session.
 
-
+# Task 4
 ## Part 1 - Is the player’s performance, as quantified by the amount of experience points gained (TotalXP variable) changing over time?
 ```{r}
 data$Date <- as.Date(data$Date)
