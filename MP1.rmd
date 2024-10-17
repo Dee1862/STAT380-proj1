@@ -10,7 +10,36 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Front Matter
+## Front Matter
 ```{r}
+library(readxl)
+library(tidyverse)
+data <- read_xlsx("CODGames2_mp.xlsx")
+```
+## Exploring teh Dataset
+```{r}
+head(data)
+str(data)
+
+# Summary statistics for a categorial variable: "PrimaryWeapon"
+PrimaryWeapon <- data$PrimaryWeapon
+table(PrimaryWeapon)
+prop.table(table(PrimaryWeapon))
+
+# Summary statistics for a quantitative variable: "PrimaryWeapon"
+Eliminations <- data$Eliminations
+summary(Eliminations)
+mean(Eliminations, na.rm = TRUE)
+median(Eliminations, na.rm = TRUE)
+max(Eliminations, na.rm = TRUE)
+sd(Eliminations, na.rm = TRUE)
+
+# Data visualization for "PrimaryWeapon"
+data |>
+  ggplot(aes(x = Eliminations)) +
+  geom_boxplot(fill = "beige", color = "black") + 
+  labs(x = "Number of Eliminations", y = "Count")
+
+
 ```
 
