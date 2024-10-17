@@ -17,11 +17,15 @@ library(tidyverse)
 library(lubridate)
 data <- read_xlsx("CODGames2_mp.xlsx")
 ```
-## Exploring the Dataset
+# Exploring the Dataset
 
-#### Selected Variables:
-Categorial Variable: PrimaryWeapon, GameType
-Quantitative Variable: Eliminations, TotalXP, Score
+### Selected Variables:
+
+**Categorial Variable**: PrimaryWeapon, GameType
+
+**Quantitative Variable**: Eliminations, TotalXP, Score
+
+#### 1. PrimaryWeapon (Categorical Variable)
 
 ```{r}
 # Summary statistics for a categorial variable: "PrimaryWeapon"
@@ -34,7 +38,13 @@ data |>
   ggplot(aes(x = PrimaryWeapon)) +
   geom_bar(fill = "darkred", color = "black") + 
   labs(x = "Primary Weapon", y = "Count")
+```
 
+The PrimaryWeapon variable represents the type of the weapon used by the player of the game while the play. The chart shows that the most used primary weapon is M16 which is aroun 45-50 of counts. However, weapons like MG 82, FFAR 1, and AK-47 is unfamous among players. The result shows that the players use the weapon which has familiarity and performance of itself. This preference can also indicate which weapons perform better in the game.
+
+#### 2. GameType (Categorical Variable)
+
+```{r}
 # Summary statistics for a categorial variable: "GameType"
 GameType <- data$GameType
 table(GameType)
@@ -45,7 +55,13 @@ data |>
   ggplot(aes(x = GameType)) +
   geom_bar(fill = "darkgreen", color = "black") + 
   labs(x = "Game Type", y = "Count")
+```
 
+The GameType variable represents the types of game modes the player can play in the game. The majority of the games were of the HC - TDM type, with nearly 200 counts. The player clearly prefers the HC - TDM game mode, which could be because it it the funniest mode to play, or it is the most popular game mode in the game community or their own friends group.
+
+#### 3. Eliminations (Quantitative Variable)
+
+```{r}
 # Summary statistics for a quantitative variable: "Eliminations"
 Eliminations <- data$Eliminations
 summary(Eliminations)
@@ -60,6 +76,13 @@ data |>
   geom_boxplot(fill = "beige", color = "black") + 
   labs(x = "Number of Eliminations", y = "Count")
 
+```
+
+The boxplot of the Eliminations variable shows the median of around 12 counts of eliminations occurs per game, with small number of outliers above 30 counts of eliminations as well. The majority of the count of eliminations in the game happens between 10 to 15 eliminations. The result is based on the players' consistent performance on the game with achieving aounr 12 counts of eliminations per game on average. However, the outliers show that their extra special players who can perform higher eliminations compare to other normal players.
+
+#### 4. TotalXP (Quantitative Variable)
+
+```{r}
 # Summary statistics for a quantitative variable: "TotalXP"
 TotalXP <- data$TotalXP
 summary(TotalXP)
@@ -74,6 +97,13 @@ data |>
   geom_histogram(fill = "lightblue", color = "black", bins = 30) + 
   labs(x = "Total XP", y = "Frequency")
 
+```
+
+The histogram of TotalXP shows the most games yield between 5,000 and 15,000 XP points. There are some of outliers which is over the 30,000 of XP points. The player occasionally earns very high XP scores, potentially during standout games or events in the game that offer bonus XP.
+
+#### 5. Score (Quantitative Variable)
+
+```{r}
 # Summary statistics for a quantitative variable: "Score"
 Score <- data$Score
 summary(Score)
@@ -88,6 +118,8 @@ data |>
   geom_histogram(fill = "orange", color = "black", bins = 30) + 
   labs(x = "Score", y = "Frequency")
 ```
+
+The histogram of the Score shows that the scores are fairly spreaded, however the most of the player scores peak around 2,000 to 4,000. The score shows similar shape and the peak point of frequency compare to the plot of eliminations and xp. This fact tells that the quantatitive value is related to each other and could be able to connected.
 
 
 ## Potential questions to ask:
