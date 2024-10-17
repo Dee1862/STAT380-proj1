@@ -14,9 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(readxl)
 library(tidyverse)
+library(lubridate)
 data <- read_xlsx("CODGames2_mp.xlsx")
 ```
-## Exploring teh Dataset
+## Exploring the Dataset
 ```{r}
 head(data)
 str(data)
@@ -36,10 +37,49 @@ sd(Eliminations, na.rm = TRUE)
 
 # Data visualization for "PrimaryWeapon"
 data |>
+  ggplot(aes(x = PrimaryWeapon)) +
+  geom_bar(fill = "darkred", color = "black") + 
+  labs(x = "Primary Weapon", y = "Count")
+
+# Data visualization for "Eliminations"
+data |>
   ggplot(aes(x = Eliminations)) +
   geom_boxplot(fill = "beige", color = "black") + 
   labs(x = "Number of Eliminations", y = "Count")
 
 
 ```
+
+
+## Potential questions to ask:
+-> How were the data for each match collected?
+-> Are there any problem with the data (like missing values and any problems) which should be accounted for?
+-> Were all the matches, from which data was collected, part of the same session.
+
+
+## Part 1 - Is the player’s performance, as quantified by the amount of experience points gained (TotalXP variable) changing over time?
+```{r}
+data$Date <- as.Date(data$Date)
+## Adding month to the data
+data <- mutate(data, Month = month(Date, label = TRUE, abbr = FALSE))
+
+## Side-by-side boxplot using "TotalXP"
+ggplot(data, aes(x = Month, y = TotalXP)) +
+  geom_boxplot(fill = "beige", color = "black") +
+  labs(x = "Months", y = "TotalXP")
+  
+```
+Yes, the player's performance is changing over time but the change is variables as the median performance decreases from June to July but increases from July to August.
+
+
+## Part 2: Is the there a relationship between the damage and the number of eliminations?
+
+```{r}
+ggplot(data, aes(x = Damage, y = Eliminations)) +
+  geom_point(color = "darkred") +
+  geom_smooth(method = "lm", color = "gold", se = FALSE, formula = y~x)
+  labs(x = "Damage", y = "Number of Eliminations")
+```
+
+
 
