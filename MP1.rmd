@@ -128,7 +128,7 @@ The histogram of the Score shows that the scores are fairly spreaded, however th
 3.  Were all the matches, from which data was collected, part of the same session.
 
 # Task 4
-## Part 1 - Is the player’s performance, as quantified by the amount of experience points gained (TotalXP variable) changing over time?
+## Part 1
 ```{r}
 data$Date <- as.Date(data$Date)
 ## Adding month to the data
@@ -140,17 +140,22 @@ ggplot(data, aes(x = Month, y = TotalXP)) +
   labs(x = "Months", y = "TotalXP")
   
 ```
+#### Question:
+Is the player’s performance, as quantified by the amount of experience points gained (TotalXP variable) changing over time?
+
+#### Answer:
 Yes, the player's performance is changing over time but the change is variables as the median performance decreases from June to July but increases from July to August.
 
 
-## Part 2: Is the there a relationship between the damage and the number of eliminations?
-
+## Part 2
 ```{r}
 ggplot(data, aes(x = Damage, y = Eliminations)) +
   geom_point(color = "darkred") +
   geom_smooth(method = "lm", color = "gold", se = FALSE, formula = y~x)
   labs(x = "Damage", y = "Number of Eliminations")
 ```
-The scatterplot shows a positive linear relationship between damage and the number of eliminations. This tells us that "Damage" and "Eliminations" are almost directly proportional to each other.
+#### Question:
+Does the amount of damage dealt in a game has any kind of relationship with the number of eliminations?
 
-
+#### Answer:
+The scatter plot shows the positive linear relationship between the Damage and the Eliminations. It is indicated by the upward linear trend with the data points and a linear regression line. The plot represents that the more damage that the player can make in the game, the more eliminations that they tend to earn. This eventually leads to the hight damage output should result in more elimination for most of the games in all time. In conclusion, "Damage" and "Eliminations" are almost directly proportional to each other.
