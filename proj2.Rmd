@@ -26,7 +26,7 @@ countNA <- function(dat){
 
 apply(X = data, MARGIN = 1, FUN = countNA)
 ```
-Using na.omit() would eliminate rows with even a single missing value. Additionally, given the large frequency of missing data as show by the output of the above code, it is better to remove these rows using the na.omit(). However, remove of this large data could impact the analysis quality.
+Using na.omit() would eliminate rows with even a single missing value. Additionally, given the large frequency of missing data as show by the output of the above code, it is better to not remove these rows using the na.omit() as it would remove all of the data. However, removing these missing data could impact the analysis quality.
 
 
 # Task 2 - Exploring the Dataset
@@ -131,5 +131,56 @@ The Damage variable represents the measure of the total damage inflicted by the 
 The histogram of the Damage shows that the most of the player inflicted a damage between 250 and 520 in each match. The high-damage outliers may re[resent the rounds with experienced player performance,like matches where the player excelled at eliminating their opponents.
 
 
-# Task 3 - 
+# Task 3 
+
+```{r}
+scores <- strsplit(as.character(data$Result), "-")
+Won <- 0
+Lost <- 0
+Tie <- 0
+for (i in scores) {
+  PlayerScore <- as.numeric(i[1])
+  OpponentScore <- as.numeric(i[2])
+  if (PlayerScore > OpponentScore){
+    Won <- Won + 1
+  } else if (OpponentScore > PlayerScore){
+      Lost <- Lost + 1
+  } else{
+    Tie <- Tie + 1
+  }
+}
+
+TotalGames <- length(data$Result)
+WinningRate <- Won/TotalGames
+LosingRate <- Lost/TotalGames
+TieRate <- Tie/TotalGames
+
+cat("Proportion of Games Won:", WinningRate)
+cat("Proportion of Games Lost:", LosingRate)
+cat("Proportion of Games in Draw:", TieRate)
+```
+
+# Task 4
+```{r}
+scores <- strsplit(as.character(data$Result), "-")
+Won1 <- numeric(length(scores))
+
+for (i in 1:length(scores)) {
+  PlayerScore <- as.numeric(scores[[i]][1])
+  OpponentScore <- as.numeric(scores[[i]][2])
+
+  if (PlayerScore > OpponentScore) {
+    Won1[i] <- 1
+  } else {
+    Won1[i] <- 0
+  }
+}
+
+data$Won1 <- Won1
+
+model <- glm(Won1 ~ Eliminations, data = data, family = binomial)
+summary(model)
+exp(coef(model))
+```
+
 
