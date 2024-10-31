@@ -1,0 +1,135 @@
+---
+title: "Mini-Project2"
+author: "Deekshith Reddy Bhoomireddy"
+date: "2024-10-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## front Matter
+```{r}
+library(tidyverse)
+library(dplyr)
+library(readxl)
+data <- read_xlsx("CODGames2_mp.xlsx")
+```
+
+# Task 1
+```{r}
+countNA <- function(dat){
+  numNA <- sum(is.na(dat))
+  return(numNA)
+}
+
+apply(X = data, MARGIN = 1, FUN = countNA)
+```
+Using na.omit() would eliminate rows with even a single missing value. Additionally, given the large frequency of missing data as show by the output of the above code, it is better to remove these rows using the na.omit(). However, remove of this large data could impact the analysis quality.
+
+
+# Task 2 - Exploring the Dataset
+
+### Selected Variables:
+
+**Categorial Variable**: Map1, Map2, Choice
+
+**Quantitative Variable**: Deaths, Damage
+
+#### 1. Map1 (Categorical Variable)
+
+```{r}
+# Summary statistics for a categorical variable: "Map1"
+MapName1 <- data$Map1
+table(MapName1)
+prop.table(table(MapName1))
+
+# Data visualization for "MapName1"
+data |>
+  ggplot(aes(x = MapName1)) +
+  geom_bar(fill = "darkred", color = "black") + 
+  labs(x = "Map Name", y = "Count")
+```
+
+The Map1 variable represents the first or the primary map choice available for the players to choose. The bar chart shows the distribution of different map names in the dataset as a primary choice, highlighting which maps are frequently shown as the first choice. This distribution specifically indicates the maps most often featured in the game’s rotation as the first choice. Moreover, most of the data related to the map available as the first choice is missing.
+
+#### 2. Map2 (Categorical Variable)
+
+```{r}
+# Summary statistics for a categorical variable: "Map1"
+MapName2 <- data$Map2
+table(MapName2)
+prop.table(table(MapName2))
+
+# Data visualization for "MapName2"
+data |>
+  ggplot(aes(x = MapName2)) +
+  geom_bar(fill = "darkgreen", color = "black") + 
+  labs(x = "Map Name", y = "Count")
+```
+
+The Map2 variable represents the second map choice available for the players to choose. The bar chart shows the distribution of different map names in the dataset as a second choice, highlighting which maps are frequently shown as the second choice. This distribution simply indicates the maps most often featured in the game’s rotation as the second choice. Additionally, most of the data related to the map available as the second choice is missing.
+
+#### 3. Choice (Categorical Variable)
+
+```{r}
+# Summary statistics for a categorical variable: "Map1"
+MapChoice <- data$Choice
+table(MapChoice)
+prop.table(table(MapChoice))
+
+# Data visualization for "MapChoice"
+data |>
+  ggplot(aes(x = MapChoice)) +
+  geom_bar(fill = "darkblue", color = "black") + 
+  labs(x = "Map Name", y = "Count")
+
+```
+
+The Choice variable represents the player's selection for the specific game out of the primary and the secondary choice of maps (meaning Map1 and Map2 variable). The bar chart shows how frequent each one out of the Map1 and Map2 is. This data can be used to understand the popular game configurations or the common players strategies. This data contains less missing data, so these trends can be used to understand which maps the players most commonly choose
+
+#### 4. Deaths (Quantitative Variable)
+
+```{r}
+# Summary statistics for a quantitative variable: "Deaths"
+Deaths <- data$Deaths
+summary(Deaths)
+mean(Deaths, na.rm = TRUE)
+median(Deaths, na.rm = TRUE)
+max(Deaths, na.rm = TRUE)
+sd(Deaths, na.rm = TRUE)
+
+# Data visualization for "Deaths"
+data |>
+  ggplot(aes(x = Deaths)) +
+  geom_boxplot(fill = "lightyellow", color = "black") + 
+  labs(x = "Number of Deaths", y = "Frequency")
+```
+
+The deaths variable represents the number of times a player dies in each match. The histogram of Deaths shows that most people usually die between 13 and 17 times in a game. The outliers indicate matches with unusually high deaths, possibly indicating specific challenging rounds or high-stakes and challenging game modes.
+
+#### 5. Damage (Quantitative Variable)
+
+```{r}
+# Summary statistics for a quantitative variable: "Damage"
+Damage <- data$Damage
+summary(Damage)
+mean(Damage, na.rm = TRUE)
+median(Damage, na.rm = TRUE)
+max(Damage, na.rm = TRUE)
+sd(Damage, na.rm = TRUE)
+
+# Data visualization for "Damage"
+data |>
+  ggplot(aes(x = Damage)) +
+  geom_boxplot(fill = "lightblue", color = "black") + 
+  labs(x = "Damage Done", y = "Frequency")
+```
+
+The Damage variable represents the measure of the total damage inflicted by the players in every match.
+The histogram of the Damage shows that the most of the player inflicted a damage between 250 and 520 in each match. The high-damage outliers may re[resent the rounds with experienced player performance,like matches where the player excelled at eliminating their opponents.
+
+
+# Task 3 - 
+
