@@ -1,7 +1,7 @@
 ---
 title: "Mini-Project2"
-author: "Deekshith Reddy Bhoomireddy"
-date: "2024-10-29"
+author: "Deekshith Reddy Bhoomireddy, Milton La"
+date: "2024-10-31"
 output: html_document
 ---
 
@@ -49,7 +49,8 @@ prop.table(table(MapName1))
 data |>
   ggplot(aes(x = MapName1)) +
   geom_bar(fill = "darkred", color = "black") + 
-  labs(x = "Map Name", y = "Count")
+  labs(x = "Map Name", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 The Map1 variable represents the first or the primary map choice available for the players to choose. The bar chart shows the distribution of different map names in the dataset as a primary choice, highlighting which maps are frequently shown as the first choice. This distribution specifically indicates the maps most often featured in the game’s rotation as the first choice. Moreover, most of the data related to the map available as the first choice is missing.
@@ -66,7 +67,8 @@ prop.table(table(MapName2))
 data |>
   ggplot(aes(x = MapName2)) +
   geom_bar(fill = "darkgreen", color = "black") + 
-  labs(x = "Map Name", y = "Count")
+  labs(x = "Map Name", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 The Map2 variable represents the second map choice available for the players to choose. The bar chart shows the distribution of different map names in the dataset as a second choice, highlighting which maps are frequently shown as the second choice. This distribution simply indicates the maps most often featured in the game’s rotation as the second choice. Additionally, most of the data related to the map available as the second choice is missing.
@@ -83,7 +85,8 @@ prop.table(table(MapChoice))
 data |>
   ggplot(aes(x = MapChoice)) +
   geom_bar(fill = "darkblue", color = "black") + 
-  labs(x = "Map Name", y = "Count")
+  labs(x = "Map Name", y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
@@ -105,6 +108,7 @@ data |>
   ggplot(aes(x = Deaths)) +
   geom_boxplot(fill = "lightyellow", color = "black") + 
   labs(x = "Number of Deaths", y = "Frequency")
+  
 ```
 
 The deaths variable represents the number of times a player dies in each match. The histogram of Deaths shows that most people usually die between 13 and 17 times in a game. The outliers indicate matches with unusually high deaths, possibly indicating specific challenging rounds or high-stakes and challenging game modes.
@@ -155,8 +159,8 @@ WinningRate <- Won/TotalGames
 LosingRate <- Lost/TotalGames
 TieRate <- Tie/TotalGames
 
-cat("Proportion of Games Won:", WinningRate)
-cat("Proportion of Games Lost:", LosingRate)
+cat("Proportion of Games Won:", WinningRate, "\n")
+cat("Proportion of Games Lost:", LosingRate, "\n")
 cat("Proportion of Games in Draw:", TieRate)
 ```
 
@@ -180,7 +184,27 @@ data$Won1 <- Won1
 
 model <- glm(Won1 ~ Eliminations, data = data, family = binomial)
 summary(model)
-exp(coef(model))
+
+odds_ratios <- exp(coef(model))
+
+print(odds_ratios)
+
+elimination_coef <- summary(model)$coefficients["Eliminations", "Estimate"]
+elimination_p_value <- summary(model)$coefficients["Eliminations", "Pr(>|z|)"]
+odds_ratio_eliminations <- odds_ratios["Eliminations"]
+
+cat("Coefficient for Eliminations:", elimination_coef, "\n")
+cat("P-value for Eliminations:", elimination_p_value, "\n")
+cat("Odds Ratio for Eliminations:", odds_ratio_eliminations, "\n")
+
+if (elimination_p_value < 0.05) {
+  cat("The relationship between eliminations and winning is statistically significant (p-value < 0.05).\n")
+  if (odds_ratio_eliminations > 1) {
+    cat("For each additional elimination, the odds of winning increase by a factor of", odds_ratio_eliminations, ".\n")
+  } else {
+    cat("For each additional elimination, the odds of winning decrease by a factor of", odds_ratio_eliminations, ".\n")
+  }
+} else {
+  cat("The relationship between eliminations and winning is not statistically significant (p-value >= 0.05).\n")
+}
 ```
-
-
