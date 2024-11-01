@@ -204,4 +204,11 @@ cat("Coefficient Eliminations:", elimination_coef, "\n")
 cat("P-value of Eliminations:", elimination_p_value, "\n")
 cat("Odds Ratio for Eliminations:", odds_ratio_eliminations)
 ```
+<<<<<<< HEAD
 Answer: There is a statistically positive relationship between the number of eliminations and the relationship of winning a game. Specifically, for each additional elimination, the odds of the player's team winning increase by about 6.49%. This suggests that eliminations play a meaningful role in contributing to a team's success in the game.
+=======
+
+#### Is there a statistically significant relationship between the number of eliminations a player achieves in a game and the relationship of their team winning?
+
+There is a statistically positive relationship between the number of eliminations and the relationship of winning a game. Specifically, for each additional elimination, the odds of the player's team winning increase by about 6.49%. This suggests that eliminations play a meaningful role in contributing to a team's success in the game.
+>>>>>>> f4c5314e1ff913f18954e6f810ea9e9c4e61c526
