@@ -193,18 +193,7 @@ elimination_coef <- summary(model)$coefficients["Eliminations", "Estimate"]
 elimination_p_value <- summary(model)$coefficients["Eliminations", "Pr(>|z|)"]
 odds_ratio_eliminations <- odds_ratios["Eliminations"]
 
-cat("Coefficient for Eliminations:", elimination_coef, "\n")
-cat("P-value for Eliminations:", elimination_p_value, "\n")
-cat("Odds Ratio for Eliminations:", odds_ratio_eliminations, "\n")
-
-if (elimination_p_value < 0.05) {
-  cat("The relationship between eliminations and winning is statistically significant (p-value < 0.05).\n")
-  if (odds_ratio_eliminations > 1) {
-    cat("For each additional elimination, the odds of winning increase by a factor of", odds_ratio_eliminations, ".\n")
-  } else {
-    cat("For each additional elimination, the odds of winning decrease by a factor of", odds_ratio_eliminations, ".\n")
-  }
-} else {
-  cat("The relationship between eliminations and winning is not statistically significant (p-value >= 0.05).\n")
-}
+cat("Coefficient Eliminations:", elimination_coef, "\n")
+cat("P-value of Eliminations:", elimination_p_value, "\n")
+cat("Odds Ratio for Eliminations:", odds_ratio_eliminations)
 ```
