@@ -199,3 +199,5 @@ cat("Coefficient Eliminations:", elimination_coef, "\n")
 cat("P-value of Eliminations:", elimination_p_value, "\n")
 cat("Odds Ratio for Eliminations:", odds_ratio_eliminations)
 ```
+
+Is there a statistically significant relationship between the number of eliminations a player achieves in a game and the likelihood of their team winning?
