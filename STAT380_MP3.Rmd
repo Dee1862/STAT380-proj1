@@ -19,6 +19,8 @@ library(dplyr)
 library(glmnet)
 library(MASS)
 library(readxl)
+library(rpart)
+library(rattle)
 
 data <- read_xlsx("CODGames2_mp.xlsx")
 ```
@@ -126,6 +128,7 @@ print(lasso_coefs)
 ```
 
 
+### Stepwise Regression (other feature selection procedure)
 ```{r}
 # Build a full model with all predictors
 full_model <- lm(Score ~ TotalXP + Eliminations + Deaths + Damage + XPType + Won, data = fp_full)
@@ -135,5 +138,46 @@ stepwise_model <- step(full_model, direction = "both")
 
 # Display the summary of the stepwise regression model
 summary(stepwise_model)
+```
+
+
+
+
+b. Build a regression tree for predicting Score using total XP, eliminations, deaths, damage, XPType, and whether the player’s team won. Specify that each node must contain at least 15 observations. Display the tree and report the variables associated with the 3 highest variable importance values. (Include the variable importance values when mentioning the variables.)
+
+```{r}
+fp_full$Won <- as.factor(fp_full$Won)
+#Perform Training/Validation Split
+set.seed(123)
+trainInd <- sample(1:nrow(fp_full), floor(0.85*nrow(fp_full)))
+set.seed(NULL)
+
+#Create Train and Validations
+Train <- fp_full[trainInd, ]
+Validation <- fp_full[-trainInd, ]
+```
+
+```{r}
+set.seed(123)
+reg_tree <- rpart(Score ~ TotalXP + Eliminations + Deaths + Damage + XPType + Won, 
+                  data = Train, 
+                  method = "anova",  # for regression tree
+                  control = rpart.control(minsplit = 15))
+```
+
+
+```{r}
+fancyRpartPlot(reg_tree)
+```
+
+
+```{r}
+# Extract and display variable importance from the regression tree
+variable_importance <- reg_tree$variable.importance
+print(variable_importance)
+
+# Display the top 3 most important variables
+top_3_variables <- sort(variable_importance, decreasing = TRUE)[1:3]
+print(top_3_variables)
 ```
 
