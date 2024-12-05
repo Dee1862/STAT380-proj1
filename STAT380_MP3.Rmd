@@ -1,0 +1,139 @@
+---
+title: "BhoomireddyD_STAT380_MP3.rmd"
+author: "Deekshith Reddy Bhoomireddy"
+date: "2024-11-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Front Matter - Clean Environment, Load Libraries, User Defined Functions
+
+```{r}
+rm(list = ls())
+#Add libraries as needed
+library(tidyverse)
+library(dplyr)
+library(glmnet)
+library(MASS)
+library(readxl)
+
+data <- read_xlsx("CODGames2_mp.xlsx")
+```
+
+
+```{r}
+fp_full <-
+  data |>
+  filter(FullPartial == "Full")
+```
+
+
+```{r}
+# Side-by-side boxplot for the TotalXP and the XRType
+fp_full |>
+  ggplot(aes(x = XPType, y = TotalXP)) +
+  geom_boxplot() + 
+  labs(title = "Boxplot of TotalXP by XPType",
+       x = "Type of Experience Points Earned",
+       y = "Total Experiece Points (XP)")
+```
+
+
+```{r}
+summary_stats <-
+  fp_full |>
+  group_by(XPType) |>
+  summarize(
+    Mean = mean(TotalXP),
+    Median = median(TotalXP),
+    Min = min(TotalXP),
+    Max = max(TotalXP),
+    SD = sd(TotalXP)
+  )
+print(summary_stats)
+```
+
+### Interpretation about the relationship between XPType and the TotalXP
+
+##### Mean:The mean "TotalXP" for players with Double XP + 10% is almost double that of the players with 10% Boost, which indicates that players with "Double XP + 10%" is earning significatly higher experience points on average than those with the "10% Boost"
+
+##### Median: The median TotalXP values is lightly lower than the mean for both the groups which suggests the presence of some outliers which are on the upper sides. Moreover, as the median TotalXP values of the "Double XP +10%" group is very lower than the mean when compared to the other group which suggests the presence of more upper outliers on the "Double XP + 10%" group, pulling the mean up.  This indicates that the "Double XP + 10%" has a higher central tendency or simply that players with this XPType earn more experience points.
+
+##### Minimum: The minium TotalXP values in both the XPType groups indicates that even the lowest-scoring player with a "Double XP + 10%" XPType have a higher experience score than the lowest scoring players with "10% Boost"
+
+##### Maximum: The maximum TotalXP values in both the XPType groups indicates player with a "Double XP + 10%" can have a significantly higher experience score than the players with "10% Boost", mostly due thw doubled experience points combined with the 10% bonus points.
+
+##### Standard Deviation: 
+
+
+To conclude, this indicates that the overall performance of the players with "Double XP + 10%" is better than those with the "10% Boost".
+
+
+
+
+2. Suppose we wish to build an appropriate model for modeling the Score variable for games in which the player participated in the full match of a HC – TDM game type. We wish to answer the following research question: Of the predictors total XP, eliminations, deaths, damage, XPType, and whether the player’s team won, which should be included in a model for the Score? To answer this, you will have to create a new variable that indicates whether the player was on the winning team or not. NOTE: Since this is an inference question and we are not worried about how well the model will generalize to new data, there is no need to do a training/validation split in this problem.
+
+ a. Implement LASSO regression and one other feature selection procedure that we covered in Lectures 14/15. Include relevant plots, a discussion on which value of lambda you selected, the estimated equation from LASSO and the estimated equation from the second method. Discuss/compare the results of LASSO with those of the other method. 
+
+### Preprocessing data:
+```{r}
+
+scores <- strsplit(as.character(fp_full$Result), "-")
+Won1 <- numeric(length(scores))
+
+for (i in 1:length(scores)) {
+  PlayerScore <- as.numeric(scores[[i]][1])
+  OpponentScore <- as.numeric(scores[[i]][2])
+
+  if (PlayerScore > OpponentScore) {
+    Won1[i] <- 1
+  } else {
+    Won1[i] <- 0
+  }
+}
+
+fp_full$Won <- Won1
+
+# Prepare the data for modeling
+fp_full <- fp_full %>%
+  mutate(XPType = factor(XPType))
+
+# Prepare the predictors, excluding the response variable and any non-predictor columns
+X <- model.matrix(Score ~ TotalXP + Eliminations + Deaths + Damage + XPType + Won - 1, data = fp_full)
+
+# Define the response variable (Score)
+y <- fp_full$Score
+```
+
+
+```{r}
+# Fit a LASSO model using cross-validation to select the best lambda
+lasso_model <- cv.glmnet(X, y, alpha = 1)
+
+# Plot the cross-validation curve to determine the best lambda
+plot(lasso_model)
+
+# Get the best lambda value selected by cross-validation
+best_lambda <- lasso_model$lambda.min
+cat("Best lambda for LASSO: ", best_lambda, "\n")
+
+# Get the coefficients at the best lambda
+lasso_coefs <- coef(lasso_model, s = "lambda.min")
+print(lasso_coefs)
+```
+
+
+```{r}
+# Build a full model with all predictors
+full_model <- lm(Score ~ TotalXP + Eliminations + Deaths + Damage + XPType + Won, data = fp_full)
+
+# Perform stepwise regression (both forward and backward selection)
+stepwise_model <- step(full_model, direction = "both")
+
+# Display the summary of the stepwise regression model
+summary(stepwise_model)
+```
+
