@@ -60,18 +60,18 @@ print(summary_stats)
 
 ### Interpretation about the relationship between XPType and the TotalXP
 
-##### Mean:The mean "TotalXP" for players with Double XP + 10% is almost double that of the players with 10% Boost, which indicates that players with "Double XP + 10%" is earning significatly higher experience points on average than those with the "10% Boost"
+##### Mean:The mean "TotalXP" for players with Double XP + 10% is almost double that of the players with 10% Boost, which indicates that on average, players using the "Double XP + 10%" bonus earn significantly more experience points than those players using the "10% Boost." The huge difference in mean values suggests that the "Double XP + 10%" bonus has a more substantial effect on player performance in terms of experience points.
 
-##### Median: The median TotalXP values is lightly lower than the mean for both the groups which suggests the presence of some outliers which are on the upper sides. Moreover, as the median TotalXP values of the "Double XP +10%" group is very lower than the mean when compared to the other group which suggests the presence of more upper outliers on the "Double XP + 10%" group, pulling the mean up.  This indicates that the "Double XP + 10%" has a higher central tendency or simply that players with this XPType earn more experience points.
+##### Median: The median TotalXP values is lightly lower than the mean for both the groups which suggests the presence of some outliers which are on the upper sides. Morever, the gap between the median and mean is more in the "Double XP + 10%" group, which indicates that this group has more extreme upper outliers. These outliers pull the mean higher than the median, suggesting that the "Double XP + 10%" group has a right-skewed distribution with a small number of players earning exceptionally high experience points, thereby raising the overall average of this group.
 
 ##### Minimum: The minium TotalXP values in both the XPType groups indicates that even the lowest-scoring player with a "Double XP + 10%" XPType have a higher experience score than the lowest scoring players with "10% Boost"
 
-##### Maximum: The maximum TotalXP values in both the XPType groups indicates player with a "Double XP + 10%" can have a significantly higher experience score than the players with "10% Boost", mostly due thw doubled experience points combined with the 10% bonus points.
+##### Maximum: The maximum TotalXP values in both the XPType groups indicates that players with a "Double XP + 10%" can have a significantly higher experience score than the players with "10% Boost", mostly due thw doubled experience points combined with the 10% bonus points.
 
-##### Standard Deviation: 
+##### Standard Deviation: The standard deviation in both the XPType groups indicates variability in the players experience points. Also, the group with a "Double XP + 10%" show a significantly higher standard deviation than the "10% Boost" group, suggesting greater dispersion in experience points within the "Double XP + 10%" group, whereas consistent performance within the "10% boost" group.
 
 
-To conclude, this indicates that the overall performance of the players with "Double XP + 10%" is better than those with the "10% Boost".
+To conclude, all this above summary and inferences indicate that the overall performance of the players with "Double XP + 10%" is better than those with the "10% Boost".
 
 
 
@@ -152,32 +152,42 @@ set.seed(123)
 trainInd <- sample(1:nrow(fp_full), floor(0.85*nrow(fp_full)))
 set.seed(NULL)
 
-#Create Train and Validations
+#Create Train and Validations variables
 Train <- fp_full[trainInd, ]
 Validation <- fp_full[-trainInd, ]
 ```
 
 ```{r}
+#Grow the regression tree
 set.seed(123)
 reg_tree <- rpart(Score ~ TotalXP + Eliminations + Deaths + Damage + XPType + Won, 
                   data = Train, 
-                  method = "anova",  # for regression tree
+                  method = "anova",
                   control = rpart.control(minsplit = 15))
 ```
 
 
 ```{r}
-fancyRpartPlot(reg_tree)
+# Plots the regresion tree
+fancyRpartPlot(reg_tree, cex = 0.7)
 ```
 
 
 ```{r}
-# Extract and display variable importance from the regression tree
+# Extract the variable importance from the regression tree
 variable_importance <- reg_tree$variable.importance
+# Displays the extracted variable importance
 print(variable_importance)
 
-# Display the top 3 most important variables
-top_3_variables <- sort(variable_importance, decreasing = TRUE)[1:3]
+# Stores the top most important variables
+top_variables <- 
+  variable_importance |>
+  sort(decreasing = TRUE)
+# Stores and displays the top 3 important variables
+top_3_variables <- top_variables[1:3]
 print(top_3_variables)
 ```
+
+
+
 
