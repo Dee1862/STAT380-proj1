@@ -1,7 +1,7 @@
 ---
-title: "BhoomireddyD_STAT380_MP3.rmd"
-author: "Deekshith Reddy Bhoomireddy"
-date: "2024-11-29"
+title: "Mini Project 3"
+author: "Deekshith Reddy Bhoomireddy, Milton La"
+date: "2024-12-05"
 output: html_document
 ---
 
@@ -25,13 +25,13 @@ library(rattle)
 data <- read_xlsx("CODGames2_mp.xlsx")
 ```
 
+## Task 1
 
 ```{r}
 fp_full <-
   data |>
   filter(FullPartial == "Full")
 ```
-
 
 ```{r}
 # Side-by-side boxplot for the TotalXP and the XRType
@@ -70,31 +70,29 @@ print(summary_stats)
 
 ##### Standard Deviation: The standard deviation in both the XPType groups indicates variability in the players experience points. Also, the group with a "Double XP + 10%" show a significantly higher standard deviation than the "10% Boost" group, suggesting greater dispersion in experience points within the "Double XP + 10%" group, whereas consistent performance within the "10% boost" group.
 
+##### To conclude, all this above summary and inferences indicate that the overall performance of the players with "Double XP + 10%" is better than those with the "10% Boost".
 
-To conclude, all this above summary and inferences indicate that the overall performance of the players with "Double XP + 10%" is better than those with the "10% Boost".
+## Task 2
 
+#### a. Implement LASSO regression and one other feature selection procedure that we covered in Lectures 14/15. Include relevant plots, a discussion on which value of lambda you selected, the estimated equation from LASSO and the estimated equation from the second method. Discuss/compare the results of LASSO with those of the other method. 
 
-
-
-2. Suppose we wish to build an appropriate model for modeling the Score variable for games in which the player participated in the full match of a HC – TDM game type. We wish to answer the following research question: Of the predictors total XP, eliminations, deaths, damage, XPType, and whether the player’s team won, which should be included in a model for the Score? To answer this, you will have to create a new variable that indicates whether the player was on the winning team or not. NOTE: Since this is an inference question and we are not worried about how well the model will generalize to new data, there is no need to do a training/validation split in this problem.
-
- a. Implement LASSO regression and one other feature selection procedure that we covered in Lectures 14/15. Include relevant plots, a discussion on which value of lambda you selected, the estimated equation from LASSO and the estimated equation from the second method. Discuss/compare the results of LASSO with those of the other method. 
-
-### Preprocessing data:
+#### Preprocessing data:
 ```{r}
-
 scores <- strsplit(as.character(fp_full$Result), "-")
 Won1 <- numeric(length(scores))
 
 for (i in 1:length(scores)) {
   PlayerScore <- as.numeric(scores[[i]][1])
   OpponentScore <- as.numeric(scores[[i]][2])
-
+  
   if (PlayerScore > OpponentScore) {
     Won1[i] <- 1
-  } else {
+  }
+  
+  else {
     Won1[i] <- 0
   }
+  
 }
 
 fp_full$Won <- Won1
@@ -103,47 +101,63 @@ fp_full$Won <- Won1
 fp_full <- fp_full %>%
   mutate(XPType = factor(XPType))
 
-# Prepare the predictors, excluding the response variable and any non-predictor columns
 X <- model.matrix(Score ~ TotalXP + Eliminations + Deaths + Damage + XPType + Won - 1, data = fp_full)
-
-# Define the response variable (Score)
 y <- fp_full$Score
 ```
 
-
 ```{r}
-# Fit a LASSO model using cross-validation to select the best lambda
 lasso_model <- cv.glmnet(X, y, alpha = 1)
 
-# Plot the cross-validation curve to determine the best lambda
 plot(lasso_model)
+abline(v = log(lasso_model$lambda.min), col = "red", lty = 2)
+title("LASSO Cross-Validation Curve", line = 2.5)
 
-# Get the best lambda value selected by cross-validation
+# Best lambda value
 best_lambda <- lasso_model$lambda.min
 cat("Best lambda for LASSO: ", best_lambda, "\n")
 
-# Get the coefficients at the best lambda
-lasso_coefs <- coef(lasso_model, s = "lambda.min")
-print(lasso_coefs)
+# Coefficient of best lambda
+lasso_coefs <- as.matrix(coef(lasso_model, s = "lambda.min"))
+lasso_results <- data.frame(
+  Feature = rownames(lasso_coefs)[lasso_coefs != 0],
+  Coefficient = lasso_coefs[lasso_coefs != 0]
+)
+
+# Remove intercept
+lasso_results <- lasso_results[lasso_results$Feature != "(Intercept)", ]
+
+print("LASSO Selected Features and Coefficients:")
+print(lasso_results)
 ```
 
 
-### Stepwise Regression (other feature selection procedure)
+#### Stepwise Regression (other feature selection procedure)
 ```{r}
-# Build a full model with all predictors
+# Full model with predictor
 full_model <- lm(Score ~ TotalXP + Eliminations + Deaths + Damage + XPType + Won, data = fp_full)
 
-# Perform stepwise regression (both forward and backward selection)
+# Stepwise Regression Model
 stepwise_model <- step(full_model, direction = "both")
 
-# Display the summary of the stepwise regression model
-summary(stepwise_model)
+print(summary(stepwise_model))
 ```
 
+#### Comparison of LASSO and Stepwise Regression
+```{r}
+cat("Selected Features Comparison:\n")
 
+cat("LASSO Features:\n")
+print(lasso_results$Feature)
 
+cat("Stepwise Regression Selected Features:\n")
+print(names(coef(stepwise_model)))
+```
 
-b. Build a regression tree for predicting Score using total XP, eliminations, deaths, damage, XPType, and whether the player’s team won. Specify that each node must contain at least 15 observations. Display the tree and report the variables associated with the 3 highest variable importance values. (Include the variable importance values when mentioning the variables.)
+##### Discussion:
+##### LASSO regression provides the approach with selecting important predictors by giving a penalty to less significant variables, and put their coefficients to close zero. On the other hand, Stepwise Regression use the process of iterative to value the prodictors and build the model. However, sometimes, it contains the variables which is not much important.
+##### Both approach identifies similar key predictors. Nevertheless, the LASSO model, it automatically handles the variable selection and regularization, it is useful if the model is running simplicity and avoiding overfitting. Stepwise Regression will be helpful with exploring all the possible related variables including the predictors.
+
+#### b. Build a regression tree for predicting Score using total XP, eliminations, deaths, damage, XPType, and whether the player’s team won. Specify that each node must contain at least 15 observations. Display the tree and report the variables associated with the 3 highest variable importance values. (Include the variable importance values when mentioning the variables.)
 
 ```{r}
 fp_full$Won <- as.factor(fp_full$Won)
@@ -188,6 +202,53 @@ top_3_variables <- top_variables[1:3]
 print(top_3_variables)
 ```
 
+#### c. When building linear regression models, we often wish to determine which variables are the most important. One way of doing this is to look at the magnitude (absolute value) of the estimated coefficients for the regression model built using standardized inputs (centered to have a mean of 0 and a standard deviation of 1). Based on the variables selected by the other feature selection procedure from part a. (in other words, not the LASSO model), standardize the inputs, build the regression model, report the estimated equation, and report the 3 most important variables based on the magnitude (absolute value) of the estimated coefficients. How does this compare to the most important variables based on the regression tree?
 
+```{r}
+# Select Variables
+selected_vars <- c("TotalXP", "Eliminations", "Deaths", "Damage", "XPType", "Won")
 
+# Check data
+str(fp_full[selected_vars])
 
+# Convert
+fp_full$XPType <- as.factor(fp_full$XPType)
+removable <- model.matrix(~ XPType - 1, data = fp_full)
+
+# Combine
+numeric_vars <- fp_full[, c("TotalXP", "Eliminations", "Deaths", "Damage", "Won")]
+numeric_vars <- as.data.frame(lapply(numeric_vars, as.numeric))
+input <- cbind(numeric_vars, removable)
+str(input)
+
+# Scale
+scaled_data <- as.data.frame(scale(input))
+scaled_data$Score <- fp_full$Score
+
+# Linear Regression Model
+stand_model <- lm(Score ~ ., data = scaled_data)
+
+# Calculation
+coefficients <- summary(stand_model)$coefficients
+diff <- data.frame(
+  Variable = rownames(coefficients)[-1], 
+  StandardizedCoefficient = coefficients[-1, "Estimate"], 
+  AbsoluteValue = abs(coefficients[-1, "Estimate"])
+  )
+
+# Rank
+diff <- diff[order(-diff$AbsoluteValue), ]
+top_3 <- head(diff, 3)
+
+# Expected Equation
+equation <- paste("Score =", paste(paste0(round(coefficients[-1, "Estimate"], 3), " * ", rownames(coefficients)[-1]), collapse = " + "))
+
+print("Expected Equation:")
+print(equation)
+
+print("Top 3 Most Important Variables:")
+print(top_3)
+```
+
+##### The standardized regression model identified Eliminations, Damage, and TotalXP as the most important predictors of Score. They are align with the regression tree’s findings. 
+##### Both methods do have similar key variables as an ouput, however, the regression tree may better capture non-linear interactions, even if the regression model provides clear result into the magnitude contribution.
