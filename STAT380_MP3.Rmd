@@ -3,6 +3,7 @@ title: "Mini Project 3"
 author: "Deekshith Reddy Bhoomireddy, Milton La"
 date: "2024-12-05"
 output: html_document
+Discussion: “Deekshith Redddy worked on Task 1 and Milton worked on Task 2. However, in the end, we collaborated and edited each of our work, thereby increasing the efficiency of the output.”
 ---
 
 ```{r setup, include=FALSE}
