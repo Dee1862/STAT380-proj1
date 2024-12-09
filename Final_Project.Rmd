@@ -1,0 +1,67 @@
+---
+title: "Final_Project"
+author: "Deekshith Reddy Bhoomireddy"
+date: "2024-12-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Front Matter - Clean Environment, Load Libraries, User Defined Functions
+
+```{r}
+rm(list = ls())
+#Add libraries as needed
+library(tidyverse)
+library(readr)
+library(stringr)
+
+
+player1 <- read_csv("CODGames_p1_380.csv", show_col_types = FALSE)
+player2 <- read_csv("CODGames_p2_380.csv", show_col_types = FALSE)
+maps <- read_csv("CODMaps.csv", show_col_types = FALSE)
+modes <- read_csv("CODGameModes.csv", show_col_types = FALSE)
+```
+
+## Task 1
+
+```{r}
+#Combining player1 and player2 data
+# Step 1: Add a unique key for each dataset
+new_p1 <- player1 %>%
+  mutate(PlayerID = "Player1")
+
+new_p2 <- player2 %>%
+  mutate(PlayerID = "Player2")
+
+# Step 2: Perform a full join based on shared columns (excluding PlayerID)
+combined_data <- merge(new_p1, new_p2, all = TRUE, by = intersect(names(new_p1), names(new_p2)))
+```
+
+
+```{r}
+#Combining combined data with maps data
+
+#Corrections in Choice column in Combined data
+combined_data <- combined_data %>%
+  mutate(Choice = str_replace_all(Choice, "Deisel", "Diesel"),
+         Choice = str_replace_all(Choice, "Apocolypse", "Apocalypse"),
+         Choice = str_replace_all(Choice, "APocalypse", "Apocalypse"),
+         Choice = str_replace_all(Choice, "^Collateral$", "Collateral Strike"),
+         Choice = str_replace_all(Choice, "Collaterel Strike", "Collateral Strike"),
+         Choice = str_replace_all(Choice, "Riad", "Raid"),
+         Choice = str_replace_all(Choice, "Drive-in", "Drive-In"),
+         Choice = str_replace_all(Choice, "Nuketown '84 Halloween", "Nuketown '84"))
+
+# Step 1: Rename the Date column in maps_data to MapDate
+maps <- 
+  maps %>%
+  rename(MapDate = Date)
+
+# Step 2: Perform a left join to add map details
+maps_combined_data <- combined_data %>%
+  left_join(maps, by = c("Choice" = "Name"))
+```
+
