@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ## Front Matter - Clean Environment, Load Libraries, User Defined Functions
 
 ```{r}
@@ -26,14 +27,15 @@ modes <- read_csv("CODGameModes.csv", show_col_types = FALSE)
 ```
 
 ## Task 1
+#### Data Cleaning
 
 ```{r}
 #Combining player1 and player2 data
 # Step 1: Add a unique key for each dataset
-new_p1 <- player1 %>%
+new_p1 <- player1 |>
   mutate(PlayerID = "Player1")
 
-new_p2 <- player2 %>%
+new_p2 <- player2 |>
   mutate(PlayerID = "Player2")
 
 # Step 2: Perform a full join based on shared columns (excluding PlayerID)
@@ -45,7 +47,7 @@ combined_data <- merge(new_p1, new_p2, all = TRUE, by = intersect(names(new_p1),
 #Combining combined data with maps data
 
 #Corrections in Choice column in Combined data
-combined_data <- combined_data %>%
+combined_data <- combined_data |>
   mutate(Choice = str_replace_all(Choice, "Deisel", "Diesel"),
          Choice = str_replace_all(Choice, "Apocolypse", "Apocalypse"),
          Choice = str_replace_all(Choice, "APocalypse", "Apocalypse"),
@@ -57,11 +59,66 @@ combined_data <- combined_data %>%
 
 # Step 1: Rename the Date column in maps_data to MapDate
 maps <- 
-  maps %>%
+  maps |>
   rename(MapDate = Date)
 
 # Step 2: Perform a left join to add map details
-maps_combined_data <- combined_data %>%
+maps_combined_data <- combined_data |>
   left_join(maps, by = c("Choice" = "Name"))
+```
+
+```{r}
+#Combining maps_combined_data with model data
+# Replace "None" with NA in TimeLimit
+modes <- modes |>
+  mutate(TimeLimit = ifelse(TimeLimit == "None", NA, TimeLimit))
+
+# Cleaning GameType column in maps_combined_data
+maps_combined_data <- maps_combined_data |>
+  mutate(GameType = str_replace_all(GameType, "HC - TDM", "TDM"),
+         GameType = str_replace_all(GameType, "HC - Hardpoint", "Hardpoint"),
+         GameType = str_replace_all(GameType, "HC - Kill Confirmed", "Kill Confirmed"),
+         GameType = str_replace_all(GameType, "HC - Domination", "Domination"))
+
+# Merging with game_modes
+final_data <- maps_combined_data |>
+  left_join(modes, by = c("GameType" = "Mode"))
+```
+
+
+#### Data Visualization
+```{r}
+
+# Step 1: Count occurrences as candidates
+map_candidates <- 
+  final_data |>
+  pivot_longer(cols = c(Map1, Map2), names_to = "Chosen", values_to = "Map") |>
+  group_by(Map) |>
+  summarize(MapCount = n())
+
+# Step 3: Count occurrences as winners
+map_wins <- final_data |>
+  group_by(Choice) |>
+  summarize(WinCount = n()) |>
+  rename(Map = Choice)
+
+# Step 4: Merge candidate and win counts
+map_stats <- map_candidates |>
+  left_join(map_wins, by = "Map") |>
+  filter(!is.na(WinCount)) |>  # Remove rows with NA WinCount
+  mutate(WinProportion = WinCount / MapCount)
+
+# Step 5: Visualization of results
+ggplot(map_stats, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Winning Probability of Maps in Map Vote",
+    x = "Map",
+    y = "Winning Proportion"
+  )
+
+# Display map statistics
+print(map_stats)
 ```
 
