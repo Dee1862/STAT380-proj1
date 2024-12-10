@@ -18,6 +18,7 @@ rm(list = ls())
 library(tidyverse)
 library(readr)
 library(stringr)
+library(caret) # For data splitting and model evaluation
 
 
 player1 <- read_csv("CODGames_p1_380.csv", show_col_types = FALSE)
@@ -67,53 +68,36 @@ maps_combined_data <- combined_data |>
   left_join(maps, by = c("Choice" = "Name"))
 ```
 
-```{r}
-#Combining maps_combined_data with model data
-# Replace "None" with NA in TimeLimit
-modes <- modes |>
-  mutate(TimeLimit = ifelse(TimeLimit == "None", NA, TimeLimit))
-
-# Cleaning GameType column in maps_combined_data
-maps_combined_data <- maps_combined_data |>
-  mutate(GameType = str_replace_all(GameType, "HC - TDM", "TDM"),
-         GameType = str_replace_all(GameType, "HC - Hardpoint", "Hardpoint"),
-         GameType = str_replace_all(GameType, "HC - Kill Confirmed", "Kill Confirmed"),
-         GameType = str_replace_all(GameType, "HC - Domination", "Domination"))
-
-# Merging with game_modes
-final_data <- maps_combined_data |>
-  left_join(modes, by = c("GameType" = "Mode"))
-```
 
 
 #### Data Visualization
 ```{r}
 
 # Step 1: Count occurrences as candidates
-map_candidates <- 
-  final_data |>
+map_count <- 
+  maps_combined_data |>
   pivot_longer(cols = c(Map1, Map2), names_to = "Chosen", values_to = "Map") |>
   filter(!is.na(Map) & Map != "") |> 
   group_by(Map) |>
   summarize(MapCount = n())
 
 # Step 3: Count occurrences as winners
-map_wins <- 
-  final_data |>
+map_won <- 
+  maps_combined_data |>
   group_by(Choice) |>
   summarize(WinCount = n()) |>
   rename(Map = Choice)
 
 # Step 4: Merge candidate and win counts
-map_stats <- 
-  map_candidates |>
-  left_join(map_wins, by = "Map") |>
+map_statistics <- 
+  map_count |>
+  left_join(map_won, by = "Map") |>
   filter(!is.na(WinCount)) |>  # Remove rows with NA WinCount
   mutate(WinProportion = WinCount / MapCount) |>
   arrange(desc(WinProportion))
 
 # Step 5: Visualization of results
-ggplot(map_stats, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
+ggplot(map_statistics, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
   geom_bar(stat = "identity", fill = "skyblue") +
   coord_flip() +
   labs(
@@ -163,25 +147,9 @@ data_p2 <- data_player2 %>% mutate(PlayerLabel = "Player2")
 
 merged_data <- full_join(data_p1, data_p2, by = intersect(names(data_p1), names(data_p2)))
 
-data_maps <- maps
 # Merge merged_data with map details
 combined_maps_data <- merged_data %>%
-  left_join(data_maps, by = c("Choice" = "Name"))
-```
-
-```{r}
-# Replace "None" with NA in TimeLimit and clean GameType
-modes <- modes %>% mutate(TimeLimit = na_if(TimeLimit, "None"))
-
-maps_combined_data <- maps_combined_data %>%
-  mutate(GameType = recode(GameType,
-                           "HC - TDM" = "TDM",
-                           "HC - Hardpoint" = "Hardpoint",
-                           "HC - Kill Confirmed" = "Kill Confirmed",
-                           "HC - Domination" = "Domination"))
-
-final_data <- maps_combined_data %>%
-  left_join(modes, by = c("GameType" = "Mode"))
+  left_join(maps, by = c("Choice" = "Name"))
 ```
 
 
@@ -189,16 +157,16 @@ final_data <- maps_combined_data %>%
 
 ```{r}
 # Count occurrences as candidates
-map_candidates <- final_data %>%
+map_candidates <- combined_maps_data %>%
   pivot_longer(cols = c(Map1, Map2), names_to = "Chosen", values_to = "Map") %>%
   filter(!is.na(Map) & Map != "") %>%
   group_by(Map) %>%
-  summarize(MapCount = n(), .groups = "drop")
+  summarize(MapCount = n())
 
 # Count occurrences as winners
-map_wins <- final_data %>%
+map_wins <- combined_maps_data %>%
   group_by(Choice) %>%
-  summarize(WinCount = n(), .groups = "drop") %>%
+  summarize(WinCount = n()) %>%
   rename(Map = Choice)
 
 # Merge candidate and win counts
@@ -222,6 +190,54 @@ ggplot(map_stats, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
 print(map_stats)
 ```
 
+#### Write the comparision of task 1 and task 2 and the conclusion
 
 
+
+
+## Task 3
+
+#### Data Cleaning
+```{r}
+# Replace "None" with NA in TimeLimit and clean GameType
+modes <- modes %>% mutate(TimeLimit = na_if(TimeLimit, "None"))
+
+maps_combined_data <- maps_combined_data %>%
+  mutate(GameType = recode(GameType,
+                           "HC - TDM" = "TDM",
+                           "HC - Hardpoint" = "Hardpoint",
+                           "HC - Kill Confirmed" = "Kill Confirmed",
+                           "HC - Domination" = "Domination"))
+
+final_data <- maps_combined_data %>%
+  left_join(modes, by = c("GameType" = "Mode"))
+
+head(final_data)
+```
+
+
+```{r}
+# Filter out rows with missing or non-finite values
+cleaned_data <- final_data %>%
+  filter(!is.na(Score) & !is.na(TotalXP) & is.finite(Score) & is.finite(TotalXP))
+
+# Scatter plot with a smoothing line to check linearity
+ggplot(cleaned_data, aes(x = Score, y = TotalXP, color = GameType)) +
+  geom_point(alpha = 0.5) +  # Scatter points
+  geom_smooth(method = "loess", se = FALSE) +  # Add a LOESS curve
+  facet_wrap(~ GameType) +  # Separate by GameType
+  labs(title = "Checking Linearity Between Score and TotalXP",
+       x = "Score",
+       y = "TotalXP")
+```
+
+
+
+
+
+
+
+
+
+## Task 4
 
