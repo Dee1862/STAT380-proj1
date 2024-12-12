@@ -1,6 +1,6 @@
 ---
 title: "Final_Project"
-author: "Deekshith Reddy Bhoomireddy"
+author: "Deekshith Reddy Bhoomireddy, Milton La"
 date: "2024-12-09"
 output: html_document
 ---
@@ -211,8 +211,6 @@ maps_combined_data <- maps_combined_data %>%
 
 final_data <- maps_combined_data %>%
   left_join(modes, by = c("GameType" = "Mode"))
-
-head(final_data)
 ```
 
 
@@ -220,8 +218,23 @@ head(final_data)
 # Filter out rows with missing or non-finite values
 cleaned_data <- final_data %>%
   filter(!is.na(Score) & !is.na(TotalXP) & is.finite(Score) & is.finite(TotalXP))
+```
 
-# Scatter plot with a smoothing line to check linearity
+```{r}
+summary_stats <- cleaned_data %>%
+  group_by(GameType) %>%
+  summarize(
+    mean_Score = mean(Score, na.rm = TRUE),
+    sd_Score = sd(Score, na.rm = TRUE),
+    mean_TotalXP = mean(TotalXP, na.rm = TRUE),
+    sd_TotalXP = sd(TotalXP, na.rm = TRUE),
+    n = n()
+  )
+
+print(summary_stats)
+```
+
+```{r}
 ggplot(cleaned_data, aes(x = Score, y = TotalXP, color = GameType)) +
   geom_point(alpha = 0.5) +  # Scatter points
   geom_smooth(method = "loess", se = FALSE) +  # Add a LOESS curve
@@ -231,8 +244,16 @@ ggplot(cleaned_data, aes(x = Score, y = TotalXP, color = GameType)) +
        y = "TotalXP")
 ```
 
-
-
+```{r}
+# Linear Regression Model
+model <- lm(TotalXP ~ Score * GameType, data = cleaned_data)
+summary(model)
+```
+```{r}
+# Residual diagnostics
+par(mfrow = c(2, 2))
+plot(model)
+```
 
 
 
