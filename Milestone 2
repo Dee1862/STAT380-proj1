@@ -1,0 +1,264 @@
+---
+title: "Final_Project"
+author: "Deekshith Reddy Bhoomireddy, Milton La"
+date: "2024-12-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Front Matter - Clean Environment, Load Libraries, User Defined Functions
+
+```{r}
+rm(list = ls())
+#Add libraries as needed
+library(tidyverse)
+library(readr)
+library(stringr)
+library(caret) # For data splitting and model evaluation
+
+
+player1 <- read_csv("CODGames_p1_380.csv", show_col_types = FALSE)
+player2 <- read_csv("CODGames_p2_380.csv", show_col_types = FALSE)
+maps <- read_csv("CODMaps.csv", show_col_types = FALSE)
+modes <- read_csv("CODGameModes.csv", show_col_types = FALSE)
+```
+
+## Task 1
+#### Data Cleaning
+
+```{r}
+#Combining player1 and player2 data
+# Step 1: Add a unique key for each dataset
+new_p1 <- player1 |>
+  mutate(PlayerID = "Player1")
+
+new_p2 <- player2 |>
+  mutate(PlayerID = "Player2")
+
+# Step 2: Perform a full join based on shared columns (excluding PlayerID)
+combined_data <- merge(new_p1, new_p2, all = TRUE, by = intersect(names(new_p1), names(new_p2)))
+```
+
+
+```{r}
+#Combining combined data with maps data
+
+#Corrections in Choice column in Combined data
+combined_data <- combined_data |>
+  mutate(Choice = str_replace_all(Choice, "Deisel", "Diesel"),
+         Choice = str_replace_all(Choice, "Apocolypse", "Apocalypse"),
+         Choice = str_replace_all(Choice, "APocalypse", "Apocalypse"),
+         Choice = str_replace_all(Choice, "^Collateral$", "Collateral Strike"),
+         Choice = str_replace_all(Choice, "Collaterel Strike", "Collateral Strike"),
+         Choice = str_replace_all(Choice, "Riad", "Raid"),
+         Choice = str_replace_all(Choice, "Drive-in", "Drive-In"),
+         Choice = str_replace_all(Choice, "Nuketown '84 Halloween", "Nuketown '84"))
+
+# Step 1: Rename the Date column in maps_data to MapDate
+maps <- 
+  maps |>
+  rename(MapDate = Date)
+
+# Step 2: Perform a left join to add map details
+maps_combined_data <- combined_data |>
+  left_join(maps, by = c("Choice" = "Name"))
+```
+
+
+
+#### Data Visualization
+```{r}
+
+# Step 1: Count occurrences as candidates
+map_count <- 
+  maps_combined_data |>
+  pivot_longer(cols = c(Map1, Map2), names_to = "Chosen", values_to = "Map") |>
+  filter(!is.na(Map) & Map != "") |> 
+  group_by(Map) |>
+  summarize(MapCount = n())
+
+# Step 3: Count occurrences as winners
+map_won <- 
+  maps_combined_data |>
+  group_by(Choice) |>
+  summarize(WinCount = n()) |>
+  rename(Map = Choice)
+
+# Step 4: Merge candidate and win counts
+map_statistics <- 
+  map_count |>
+  left_join(map_won, by = "Map") |>
+  filter(!is.na(WinCount)) |>  # Remove rows with NA WinCount
+  mutate(WinProportion = WinCount / MapCount) |>
+  arrange(desc(WinProportion))
+
+# Step 5: Visualization of results
+ggplot(map_statistics, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Winning Probability of Maps in Map Vote",
+    x = "Map",
+    y = "Winning Proportion"
+  )
+
+# Display map statistics
+head(map_stats)
+```
+The analysis of map vote winning proportions reveals that Drive-In and Nuketown '84 stand out with proportions exceeding 1. This outstanding proportions indicate that they were often chosen either due to player preference, game mechanics (such as tie breaker mechanism), or lobby returns. Standoff achieved a perfect proportion of 1, indicating it was always chosen when available. Other all maps such as Crossroads Strike, Diesel and Raid displayed high popularity with proportions above 0.5, showing that they were often strong contenders but occasionally lost to other options. Other all maps with proportions below 0.5 are often selected when the players do not have desirable options or a worst other option showing that they often lost to other options.
+
+
+
+
+## Task 2
+#### Data Cleaning
+```{r}
+# Define a reusable correction function
+correction_values <- c(
+  "Deisel" = "Diesel",
+  "Apocolypse" = "Apocalypse",
+  "APocalypse" = "Apocalypse",
+  "Collateral" = "Collateral Strike",
+  "Collaterel Strike" = "Collateral Strike",
+  "Riad" = "Raid",
+  "Drive-in" = "Drive-In",
+  "Nuketown '84 Halloween" = "Nuketown '84"
+)
+
+apply_corrections <- function(dataset, column) {
+  dataset %>%
+    mutate({{ column }} := recode({{ column }}, !!!correction_values))
+}
+
+# Apply corrections to datasets
+data_player1 <- apply_corrections(player1, Choice)
+data_player2 <- apply_corrections(player2, Choice)
+```
+
+
+```{r}
+# Combine player1 and player2 data
+data_p1 <- data_player1 %>% mutate(PlayerLabel = "Player1")
+data_p2 <- data_player2 %>% mutate(PlayerLabel = "Player2")
+
+merged_data <- full_join(data_p1, data_p2, by = intersect(names(data_p1), names(data_p2)))
+
+# Merge merged_data with map details
+combined_maps_data <- merged_data %>%
+  left_join(maps, by = c("Choice" = "Name"))
+```
+
+
+#### Data Visualization
+
+```{r}
+# Count occurrences as candidates
+map_candidates <- combined_maps_data %>%
+  pivot_longer(cols = c(Map1, Map2), names_to = "Chosen", values_to = "Map") %>%
+  filter(!is.na(Map) & Map != "") %>%
+  group_by(Map) %>%
+  summarize(MapCount = n())
+
+# Count occurrences as winners
+map_wins <- combined_maps_data %>%
+  group_by(Choice) %>%
+  summarize(WinCount = n()) %>%
+  rename(Map = Choice)
+
+# Merge candidate and win counts
+map_stats <- map_candidates %>%
+  left_join(map_wins, by = "Map") %>%
+  filter(!is.na(WinCount)) %>%
+  mutate(WinProportion = WinCount / MapCount) %>%
+  arrange(desc(WinProportion))
+
+# Visualization of results
+ggplot(map_stats, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Winning Probability of Maps in Map Vote",
+    x = "Map",
+    y = "Winning Proportion"
+  )
+
+# Display sorted map statistics
+print(map_stats)
+```
+
+#### Write the comparision of task 1 and task 2 and the conclusion
+
+
+
+
+## Task 3
+
+#### Data Cleaning
+```{r}
+# Replace "None" with NA in TimeLimit and clean GameType
+modes <- modes %>% mutate(TimeLimit = na_if(TimeLimit, "None"))
+
+maps_combined_data <- maps_combined_data %>%
+  mutate(GameType = recode(GameType,
+                           "HC - TDM" = "TDM",
+                           "HC - Hardpoint" = "Hardpoint",
+                           "HC - Kill Confirmed" = "Kill Confirmed",
+                           "HC - Domination" = "Domination"))
+
+final_data <- maps_combined_data %>%
+  left_join(modes, by = c("GameType" = "Mode"))
+```
+
+
+```{r}
+# Filter out rows with missing or non-finite values
+cleaned_data <- final_data %>%
+  filter(!is.na(Score) & !is.na(TotalXP) & is.finite(Score) & is.finite(TotalXP))
+```
+
+```{r}
+summary_stats <- cleaned_data %>%
+  group_by(GameType) %>%
+  summarize(
+    mean_Score = mean(Score, na.rm = TRUE),
+    sd_Score = sd(Score, na.rm = TRUE),
+    mean_TotalXP = mean(TotalXP, na.rm = TRUE),
+    sd_TotalXP = sd(TotalXP, na.rm = TRUE),
+    n = n()
+  )
+
+print(summary_stats)
+```
+
+```{r}
+ggplot(cleaned_data, aes(x = Score, y = TotalXP, color = GameType)) +
+  geom_point(alpha = 0.5) +  # Scatter points
+  geom_smooth(method = "loess", se = FALSE) +  # Add a LOESS curve
+  facet_wrap(~ GameType) +  # Separate by GameType
+  labs(title = "Checking Linearity Between Score and TotalXP",
+       x = "Score",
+       y = "TotalXP")
+```
+
+```{r}
+# Linear Regression Model
+model <- lm(TotalXP ~ Score * GameType, data = cleaned_data)
+summary(model)
+```
+```{r}
+# Residual diagnostics
+par(mfrow = c(2, 2))
+plot(model)
+```
+
+
+
+
+
+
+## Task 4
+
