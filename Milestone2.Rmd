@@ -107,7 +107,7 @@ ggplot(map_statistics, aes(x = reorder(Map, WinProportion), y = WinProportion)) 
   )
 
 # Display map statistics
-head(map_stats)
+head(map_statistics)
 ```
 The analysis of map vote winning proportions reveals that Drive-In and Nuketown '84 stand out with proportions exceeding 1. This outstanding proportions indicate that they were often chosen either due to player preference, game mechanics (such as tie breaker mechanism), or lobby returns. Standoff achieved a perfect proportion of 1, indicating it was always chosen when available. Other all maps such as Crossroads Strike, Diesel and Raid displayed high popularity with proportions above 0.5, showing that they were often strong contenders but occasionally lost to other options. Other all maps with proportions below 0.5 are often selected when the players do not have desirable options or a worst other option showing that they often lost to other options.
 
