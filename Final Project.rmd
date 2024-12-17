@@ -1,0 +1,332 @@
+---
+title: "Final_Project"
+author: "Deekshith Reddy Bhoomireddy, Milton La"
+date: "2024-12-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Front Matter - Clean Environment, Load Libraries, User Defined Functions
+
+```{r}
+rm(list = ls())
+# Add libraries as needed
+library(tidyverse)
+library(readr)
+library(stringr)
+library(caret) # For data splitting and model evaluation
+
+# Task 4
+library(randomForest) # Random Forest
+library(nnet) # Logistic Regression
+library(e1071) # SVM
+
+
+player1 <- read_csv("CODGames_p1_380.csv", show_col_types = FALSE)
+player2 <- read_csv("CODGames_p2_380.csv", show_col_types = FALSE)
+maps <- read_csv("CODMaps.csv", show_col_types = FALSE)
+modes <- read_csv("CODGameModes.csv", show_col_types = FALSE)
+```
+
+## Task 1
+#### Data Cleaning
+
+```{r}
+#Combining player1 and player2 data
+# Step 1: Add a unique key for each dataset
+new_p1 <- player1 |>
+  mutate(PlayerID = "Player1")
+
+new_p2 <- player2 |>
+  mutate(PlayerID = "Player2")
+
+# Step 2: Perform a full join based on shared columns (excluding PlayerID)
+combined_data <- merge(new_p1, new_p2, all = TRUE, by = intersect(names(new_p1), names(new_p2)))
+```
+
+
+```{r}
+#Combining combined data with maps data
+
+#Corrections in Choice column in Combined data
+combined_data <- combined_data |>
+  mutate(Choice = str_replace_all(Choice, "Deisel", "Diesel"),
+         Choice = str_replace_all(Choice, "Apocolypse", "Apocalypse"),
+         Choice = str_replace_all(Choice, "APocalypse", "Apocalypse"),
+         Choice = str_replace_all(Choice, "^Collateral$", "Collateral Strike"),
+         Choice = str_replace_all(Choice, "Collaterel Strike", "Collateral Strike"),
+         Choice = str_replace_all(Choice, "Riad", "Raid"),
+         Choice = str_replace_all(Choice, "Drive-in", "Drive-In"),
+         Choice = str_replace_all(Choice, "Nuketown '84 Halloween", "Nuketown '84"))
+
+# Step 1: Rename the Date column in maps_data to MapDate
+maps <- 
+  maps |>
+  rename(MapDate = Date)
+
+# Step 2: Perform a left join to add map details
+maps_combined_data <- combined_data |>
+  left_join(maps, by = c("Choice" = "Name"))
+```
+
+
+
+#### Data Visualization
+```{r}
+
+# Step 1: Count occurrences as candidates
+map_count <- 
+  maps_combined_data |>
+  pivot_longer(cols = c(Map1, Map2), names_to = "Chosen", values_to = "Map") |>
+  filter(!is.na(Map) & Map != "") |> 
+  group_by(Map) |>
+  summarize(MapCount = n())
+
+# Step 3: Count occurrences as winners
+map_won <- 
+  maps_combined_data |>
+  group_by(Choice) |>
+  summarize(WinCount = n()) |>
+  rename(Map = Choice)
+
+# Step 4: Merge candidate and win counts
+map_statistics <- 
+  map_count |>
+  left_join(map_won, by = "Map") |>
+  filter(!is.na(WinCount)) |>  # Remove rows with NA WinCount
+  mutate(WinProportion = WinCount / MapCount) |>
+  arrange(desc(WinProportion))
+
+# Step 5: Visualization of results
+ggplot(map_statistics, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Winning Probability of Maps in Map Vote",
+    x = "Map",
+    y = "Winning Proportion"
+  )
+
+# Display map statistics
+head(map_statistics)
+```
+The analysis of map vote winning proportions reveals that Drive-In and Nuketown '84 stand out with proportions exceeding 1. This outstanding proportions indicate that they were often chosen either due to player preference, game mechanics (such as tie breaker mechanism), or lobby returns. Standoff achieved a perfect proportion of 1, indicating it was always chosen when available. Other all maps such as Crossroads Strike, Diesel and Raid displayed high popularity with proportions above 0.5, showing that they were often strong contenders but occasionally lost to other options. Other all maps with proportions below 0.5 are often selected when the players do not have desirable options or a worst other option showing that they often lost to other options.
+
+
+
+
+## Task 2
+#### Data Cleaning
+```{r}
+# Define a reusable correction function
+correction_values <- c(
+  "Deisel" = "Diesel",
+  "Apocolypse" = "Apocalypse",
+  "APocalypse" = "Apocalypse",
+  "Collateral" = "Collateral Strike",
+  "Collaterel Strike" = "Collateral Strike",
+  "Riad" = "Raid",
+  "Drive-in" = "Drive-In",
+  "Nuketown '84 Halloween" = "Nuketown '84"
+)
+
+apply_corrections <- function(dataset, column) {
+  dataset %>%
+    mutate({{ column }} := recode({{ column }}, !!!correction_values))
+}
+
+# Apply corrections to datasets
+data_player1 <- apply_corrections(player1, Choice)
+data_player2 <- apply_corrections(player2, Choice)
+```
+
+
+```{r}
+# Combine player1 and player2 data
+data_p1 <- data_player1 %>% mutate(PlayerLabel = "Player1")
+data_p2 <- data_player2 %>% mutate(PlayerLabel = "Player2")
+
+merged_data <- full_join(data_p1, data_p2, by = intersect(names(data_p1), names(data_p2)))
+
+# Merge merged_data with map details
+combined_maps_data <- merged_data %>%
+  left_join(maps, by = c("Choice" = "Name"))
+```
+
+
+#### Data Visualization
+
+```{r}
+# Count occurrences as candidates
+map_candidates <- combined_maps_data %>%
+  pivot_longer(cols = c(Map1, Map2), names_to = "Chosen", values_to = "Map") %>%
+  filter(!is.na(Map) & Map != "") %>%
+  group_by(Map) %>%
+  summarize(MapCount = n())
+
+# Count occurrences as winners
+map_wins <- combined_maps_data %>%
+  group_by(Choice) %>%
+  summarize(WinCount = n()) %>%
+  rename(Map = Choice)
+
+# Merge candidate and win counts
+map_stats <- map_candidates %>%
+  left_join(map_wins, by = "Map") %>%
+  filter(!is.na(WinCount)) %>%
+  mutate(WinProportion = WinCount / MapCount) %>%
+  arrange(desc(WinProportion))
+
+# Visualization of results
+ggplot(map_stats, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Winning Probability of Maps in Map Vote",
+    x = "Map",
+    y = "Winning Proportion"
+  )
+
+# Display sorted map statistics
+print(map_stats)
+```
+
+#### Write the comparision of task 1 and task 2 and the conclusion
+
+
+
+
+## Task 3
+
+#### Data Cleaning
+```{r}
+modes <- modes %>% mutate(TimeLimit = na_if(TimeLimit, "None"))
+
+maps_combined_data <- maps_combined_data %>%
+  mutate(GameType = recode(GameType,
+                           "HC - TDM" = "TDM",
+                           "HC - Hardpoint" = "Hardpoint",
+                           "HC - Kill Confirmed" = "Kill Confirmed",
+                           "HC - Domination" = "Domination"))
+
+final_data <- maps_combined_data %>%
+  left_join(modes, by = c("GameType" = "Mode"))
+```
+
+```{r}
+# Filter missing values
+cleaned_data <- final_data %>%
+  filter(!is.na(Score) & !is.na(TotalXP) & is.finite(Score) & is.finite(TotalXP))
+```
+
+```{r}
+summary_stats <- cleaned_data %>%
+  group_by(GameType) %>%
+  summarize(
+    mean_Score = mean(Score, na.rm = TRUE),
+    sd_Score = sd(Score, na.rm = TRUE),
+    mean_TotalXP = mean(TotalXP, na.rm = TRUE),
+    sd_TotalXP = sd(TotalXP, na.rm = TRUE),
+    n = n()
+  )
+
+print(summary_stats)
+```
+
+```{r}
+ggplot(cleaned_data, aes(x = Score, y = TotalXP, color = GameType)) +
+  geom_point(alpha = 0.5) +  # Scatter points
+  geom_smooth(method = "loess", se = FALSE) +  # Add a LOESS curve
+  facet_wrap(~ GameType) +  # Separate by GameType
+  labs(title = "Checking Linearity Between Score and TotalXP",
+       x = "Score",
+       y = "TotalXP")
+```
+
+```{r}
+# Linear Regression Model
+model <- lm(TotalXP ~ Score * GameType, data = cleaned_data)
+summary(model)
+```
+```{r}
+# Residual diagnostics
+par(mfrow = c(2, 2))
+plot(model)
+```
+
+##### Research Question: How does the game type affect TotalXP after accounting for the Score?
+
+The outputs after accounting for the Score states that the game type actually affects TotalXP.
+From the summarization of statistics shows that the Domination has the highest average value of TotalXP and Score, while, on the other hand, Kill Confirmed has the lowest average point.
+The plots also represent that the Domination do have a strong relationship in linear, while Hardpoint and TDM is returning their output at the higher scores and Kill Confirmed has the weaker trend among them.
+The regression model represents that while Score has positive impact on TotalXP, which is having coefficient as 5.413 and p-value as .00279, the relationship that actually affact the Score is smaller for Hardpoint and TDM. This defines that Domination allows the gamers or players to earn TotalXP in easier and more efficient way dependes on the score increases.
+
+## Task 4
+
+### Research Question: Is it possible to predict the GameType based on the TotalXP and Score of players?
+
+#### Methods: Random Forest, Logistic Regression, Support Vector Machines [from ISL]
+
+#### Data Wrangling:
+GameType data set is already cleaned in Task 3.
+Missing values are cleaned(removed).
+Selected only Total XP and Score as the predictor.
+
+#### Data Preparation
+```{r}
+set.seed(123)
+class_data <- cleaned_data %>%
+  select(TotalXP, Score, GameType) %>%
+  mutate(GameType = as.factor(GameType))
+
+train_index <- createDataPartition(class_data$GameType, p = 0.7, list = FALSE)
+train_data <- class_data[train_index, ]
+test_data <- class_data[-train_index, ]
+```
+
+##### Method 1. Random Forest: Is the method helps to build multiple decision tress on bootstrapped samples of the selected dataset, and combines the predictions. With selecting the prediction point (predictors) at the split, it reduce the risk of overfitting of data and improves the accuracy of non-linear relationships for output.
+```{r}
+rf_model <- randomForest(GameType ~ TotalXP + Score, data = train_data)
+rf_preds <- predict(rf_model, test_data)
+rf_accuracy <- sum(rf_preds == test_data$GameType) / nrow(test_data)
+
+
+cat("Random Forest Accuracy:", rf_accuracy, "\n")
+print(confusionMatrix(rf_preds, test_data$GameType))
+```
+
+##### Method 2. Logistic Regression: It is the models based on the probability of class membership using linear combination of predictions. It also helps to extend as multinomial logisitic regression to predict the highest probability by its classification.
+
+```{r}
+lr_model <- multinom(GameType ~ TotalXP + Score, data = train_data)
+lr_preds <- predict(lr_model, test_data)
+lr_accuracy <- sum(lr_preds == test_data$GameType) / nrow(test_data)
+
+cat("Logistic Regression Accuracy:", lr_accuracy, "\n")
+print(confusionMatrix(lr_preds, test_data$GameType))
+```
+
+##### Method 3. Support Vector Machines (SVM): It is the generalization of a simple and intuitive classifer called the maximal margin classifer. It identify the optimal separating hyperplane which separates the classes with the maximal margin. If the dataset is non-linear an cause the error in separation, SVM is able to use the kernel functions to set the data into higher dimension for its classificaion. In this work, the radial kernel function is the one chosen.
+
+```{r}
+svm_model <- svm(GameType ~ TotalXP + Score, data = train_data, kernel = "radial")
+svm_preds <- predict(svm_model, test_data)
+svm_accuracy <- sum(svm_preds == test_data$GameType) / nrow(test_data)
+
+cat("Support Vector Machines Accuracy:", svm_accuracy, "\n")
+print(confusionMatrix(svm_preds, test_data$GameType))
+```
+
+##### Comparison:
+Result:  
+Random Forest Accuracy: 0.6033  
+Logistic Regression Accuracy:	0.6364  
+Support Vector Machines Accuracy:	0.6488  
+  
+Based on their result, the Support Vector Machines (SVM) model earned the highest accuracy point at 64.88%, while the Random Forest method is running lowest accuracy of 60.33%. Also, the performance of SVM model is clear based on its confusion matrix. Thus, Support Vector Machines method is the most efficient method to use for Task 4.
+
+##### Answer for Research Question:
+According to the outputs, it is possible that GameType can be predicted by moderating the accuracy with using the values of Score and TotalXP. Among three method SVM was the most efficient model to predict the GameType based on their accuracy percentage and comparison. Some of the data is still struggling with classification performance, however, it is possible to predict the GameType with success. 
