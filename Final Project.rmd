@@ -1,7 +1,7 @@
 ---
 title: "Final_Project"
-author: "Deekshith Reddy Bhoomireddy, Milton La"
-date: "2024-12-16"
+author: "Deekshith Reddy Bhoomireddy"
+date: "2024-12-09"
 output: html_document
 ---
 
@@ -9,17 +9,16 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ## Front Matter - Clean Environment, Load Libraries, User Defined Functions
 
 ```{r}
 rm(list = ls())
-# Add libraries as needed
+#Add libraries as needed
 library(tidyverse)
 library(readr)
 library(stringr)
 library(caret) # For data splitting and model evaluation
-
-# Task 4
 library(randomForest) # Random Forest
 library(nnet) # Logistic Regression
 library(e1071) # SVM
@@ -36,14 +35,15 @@ modes <- read_csv("CODGameModes.csv", show_col_types = FALSE)
 
 ```{r}
 #Combining player1 and player2 data
-# Step 1: Add a unique key for each dataset
+
+# Step 1: Add a unique key for both player1 and player 2 datasets
 new_p1 <- player1 |>
   mutate(PlayerID = "Player1")
 
 new_p2 <- player2 |>
   mutate(PlayerID = "Player2")
 
-# Step 2: Perform a full join based on shared columns (excluding PlayerID)
+# Step 2: Performing a full join
 combined_data <- merge(new_p1, new_p2, all = TRUE, by = intersect(names(new_p1), names(new_p2)))
 ```
 
@@ -51,7 +51,7 @@ combined_data <- merge(new_p1, new_p2, all = TRUE, by = intersect(names(new_p1),
 ```{r}
 #Combining combined data with maps data
 
-#Corrections in Choice column in Combined data
+#Step 1: Corrections in Choice column in Combined data
 combined_data <- combined_data |>
   mutate(Choice = str_replace_all(Choice, "Deisel", "Diesel"),
          Choice = str_replace_all(Choice, "Apocolypse", "Apocalypse"),
@@ -62,12 +62,12 @@ combined_data <- combined_data |>
          Choice = str_replace_all(Choice, "Drive-in", "Drive-In"),
          Choice = str_replace_all(Choice, "Nuketown '84 Halloween", "Nuketown '84"))
 
-# Step 1: Rename the Date column in maps_data to MapDate
+# Step 2: Rename the Date column in maps to MapDate
 maps <- 
   maps |>
   rename(MapDate = Date)
 
-# Step 2: Perform a left join to add map details
+# Step 3: Perform a left join
 maps_combined_data <- combined_data |>
   left_join(maps, by = c("Choice" = "Name"))
 ```
@@ -77,7 +77,7 @@ maps_combined_data <- combined_data |>
 #### Data Visualization
 ```{r}
 
-# Step 1: Count occurrences as candidates
+# Step 1: Count occurrence of each map
 map_count <- 
   maps_combined_data |>
   pivot_longer(cols = c(Map1, Map2), names_to = "Chosen", values_to = "Map") |>
@@ -85,14 +85,14 @@ map_count <-
   group_by(Map) |>
   summarize(MapCount = n())
 
-# Step 3: Count occurrences as winners
+# Step 3: Count the number of wins
 map_won <- 
   maps_combined_data |>
   group_by(Choice) |>
   summarize(WinCount = n()) |>
   rename(Map = Choice)
 
-# Step 4: Merge candidate and win counts
+# Step 4: Merges the number of occurrences and wins
 map_statistics <- 
   map_count |>
   left_join(map_won, by = "Map") |>
@@ -110,7 +110,7 @@ ggplot(map_statistics, aes(x = reorder(Map, WinProportion), y = WinProportion)) 
     y = "Winning Proportion"
   )
 
-# Display map statistics
+# Step 6: Display map statistics
 head(map_statistics)
 ```
 The analysis of map vote winning proportions reveals that Drive-In and Nuketown '84 stand out with proportions exceeding 1. This outstanding proportions indicate that they were often chosen either due to player preference, game mechanics (such as tie breaker mechanism), or lobby returns. Standoff achieved a perfect proportion of 1, indicating it was always chosen when available. Other all maps such as Crossroads Strike, Diesel and Raid displayed high popularity with proportions above 0.5, showing that they were often strong contenders but occasionally lost to other options. Other all maps with proportions below 0.5 are often selected when the players do not have desirable options or a worst other option showing that they often lost to other options.
@@ -121,7 +121,7 @@ The analysis of map vote winning proportions reveals that Drive-In and Nuketown 
 ## Task 2
 #### Data Cleaning
 ```{r}
-# Define a reusable correction function
+# Define a correction function
 correction_values <- c(
   "Deisel" = "Diesel",
   "Apocolypse" = "Apocalypse",
@@ -194,9 +194,7 @@ ggplot(map_stats, aes(x = reorder(Map, WinProportion), y = WinProportion)) +
 print(map_stats)
 ```
 
-#### Write the comparision of task 1 and task 2 and the conclusion
-
-
+#### Both solutions are correct and achieve the required results, but the generative AI solution in Task 2 is better regarding clarity and readability with modern R programming practices. The AI solution is more concise and efficient by introducing reusable functions and using efficient data-cleaning techniques. Although my Task 1 solution yields the same output, it can benefit from these improvements to enhance clarity. Overall, the AI-generated solution reflects a cleaner and more robust approach, making it the preferred choice for collaborated use.
 
 
 ## Task 3
