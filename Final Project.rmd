@@ -249,11 +249,6 @@ ggplot(cleaned_data, aes(x = Score, y = TotalXP, color = GameType)) +
 model <- lm(TotalXP ~ Score * GameType, data = cleaned_data)
 summary(model)
 ```
-```{r}
-# Residual diagnostics
-par(mfrow = c(2, 2))
-plot(model)
-```
 
 ##### Research Question: How does the game type affect TotalXP after accounting for the Score?
 
